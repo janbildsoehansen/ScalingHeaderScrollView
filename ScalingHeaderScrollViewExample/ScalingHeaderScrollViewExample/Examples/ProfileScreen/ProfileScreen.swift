@@ -9,66 +9,68 @@
 import SwiftUI
 import ScalingHeaderScrollView
 
+private struct NavButtonCenterYKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
+
 struct ProfileScreen: View {
 
     @ObservedObject private var viewModel = ProfileScreenViewModel()
-    @Environment(\.presentationMode) var presentationMode
 
-    private let minHeight = 110.0
+    @State private var navButtonCenterY: CGFloat = 0
+
     private let maxHeight = 372.0
+    private let collapsedBoxHeight = 80.0
 
-    var body: some View {
-        ZStack {
-            ScalingHeaderScrollView(minHeight: minHeight, maxHeight: maxHeight) { _, progress in
-                ZStack {
-                    Color.white.edgesIgnoringSafeArea(.all)
-                    largeHeader(progress: progress)
-                }
-            } content: {
-                profileDetailsView
-            }
-            .allowsHeaderGrowth()
-            .headerAlignment(.bottom)
-
-            topButtons
-            hireButton
-        }
-        .ignoresSafeArea()
+    // minHeight is derived from the toolbar button's measured center so the collapsed
+    // title row lands exactly on it, instead of guessing a safe-area/nav-bar height
+    private var minHeight: CGFloat {
+        navButtonCenterY + collapsedBoxHeight / 2
     }
 
-    private var topButtons: some View {
-        VStack {
-            HStack {
-                Button("", action: { self.presentationMode.wrappedValue.dismiss() })
-                    .buttonStyle(CircleButtonStyle(imageName: "arrow.backward"))
-
-                Spacer()
-
+    var body: some View {
+        ScalingHeaderScrollView(minHeight: minHeight, maxHeight: maxHeight) { _, progress in
+            ZStack {
+                Color.white.edgesIgnoringSafeArea(.all)
+                largeHeader(progress: progress)
+            }
+        } content: {
+            profileDetailsView
+        }
+        .allowsHeaderGrowth()
+        .headerAlignment(.bottom)
+        .safeAreaInset(edge: .bottom) {
+            hireButton
+        }
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button("", action: { print("Info") })
                     .buttonStyle(CircleButtonStyle(imageName: "ellipsis"))
+                    .background {
+                        GeometryReader { geo in
+                            Color.clear.preference(key: NavButtonCenterYKey.self, value: geo.frame(in: .global).midY)
+                        }
+                    }
             }
-            .padding(.horizontal, 17)
-            .padding(.top, 50)
-
-            Spacer()
         }
-        .ignoresSafeArea()
+        .onPreferenceChange(NavButtonCenterYKey.self) { navButtonCenterY = $0 }
     }
 
     private var hireButton: some View {
-        VStack {
-            Spacer()
-            Button("Hire", action: { print("hire") })
-                .buttonStyle(HireButtonStyle())
-                .padding(.horizontal, 15)
-                .frame(height: 60)
-                .padding(.top, 10)
-                .padding(.bottom, 50)
-                .background {
-                    VisualEffectView(effect: UIBlurEffect(style: .regular))
-                        .ignoresSafeArea()
-                }
-        }
+        Button("Hire", action: { print("hire") })
+            .buttonStyle(HireButtonStyle())
+            .padding(.top, 10)
+            .padding(.horizontal, 15)
+            .frame(height: 60)
+            .background {
+                VisualEffectView(effect: UIBlurEffect(style: .regular))
+                    .ignoresSafeArea()
+            }
     }
 
     private var smallHeader: some View {
@@ -112,7 +114,7 @@ struct ProfileScreen: View {
                     VisualEffectView(effect: UIBlurEffect(style: .regular))
                         .mask(Rectangle().cornerRadius(40, corners: [.topLeft, .topRight]))
                         .offset(y: 10.0)
-                        .frame(height: 80.0)
+                        .frame(height: collapsedBoxHeight)
 
                     RoundedRectangle(cornerRadius: 40.0, style: .circular)
                         .foregroundColor(.clear)
@@ -127,11 +129,11 @@ struct ProfileScreen: View {
                         .opacity(1 - max(0, min(1, (progress - 0.75) * 4.0)))
 
                     smallHeader
-                        .padding(.leading, 85.0)
+                        .frame(maxWidth: .infinity)
                         .opacity(progress)
                         .opacity(max(0, min(1, (progress - 0.75) * 4.0)))
                 }
-                .frame(height: 80.0)
+                .frame(height: collapsedBoxHeight)
             }
         }
     }

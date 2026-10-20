@@ -55,7 +55,11 @@ extension Color {
     //Booking
     static let appRed = Color.hex("#F62154")
     static let appBookingBlue = Color.hex("#1874E0")
+    static let appBookingFooterBackground = Color.hex("#F7F7FA")
 
     //Profile
     static let appProfileBlue = Color.hex("#374BFE")
+
+    //Banking
+    static let appBankingBackground = Color.hex("#EFF3F5")
 }

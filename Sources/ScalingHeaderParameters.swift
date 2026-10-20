@@ -68,9 +68,23 @@ final class ScalingHeaderScrollViewStore: ObservableObject {
 
 struct TabScrollState {
     var scrollView: UIScrollView?
-    var offset: CGFloat = 0
+    var offset: CGFloat?
 }
 
 final class TabScrollStates<Tab: Hashable> {
     var states: [Tab: TabScrollState] = [:]
+}
+
+// MARK: -
+
+private struct ScalingHeaderSafeAreaInsetsKey: EnvironmentKey {
+    static let defaultValue = EdgeInsets()
+}
+
+public extension EnvironmentValues {
+    /// Safe area insets captured live via GeometryReader, since the header's root ignoresSafeArea().
+    var scalingHeaderSafeAreaInsets: EdgeInsets {
+        get { self[ScalingHeaderSafeAreaInsetsKey.self] }
+        set { self[ScalingHeaderSafeAreaInsetsKey.self] = newValue }
+    }
 }

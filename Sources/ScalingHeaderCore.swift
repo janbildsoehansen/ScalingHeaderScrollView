@@ -26,6 +26,7 @@ struct ScalingHeaderCore<Header: View, Content: View>: View {
     @State private var refreshDragProgress: CGFloat = 0
     @State private var loadMoreDragProgress: CGFloat = 0
     @State private var refreshSpinnerOpacity: CGFloat = 1
+    @State private var windowSafeAreaInsets = EdgeInsets()
 
     private var hasPullToRefresh: Bool { params.isPullToRefreshEnabled && params.didPullToRefresh != nil }
     private var hasPullToLoadMore: Bool { params.isPullToLoadMoreEnabled && params.didPullToLoadMore != nil }
@@ -36,48 +37,59 @@ struct ScalingHeaderCore<Header: View, Content: View>: View {
         max(0, min(1, (params.maxHeight - headerHeight) / (params.maxHeight - params.minHeight)))
     }
 
+    // header content is kept at its full size and clipped to the shrinking frame below,
+    // otherwise it would just be proposed the shrinking frame size and headerAlignment would have no visible effect
+    private var headerContentMinHeight: CGFloat {
+        max(params.maxHeight, headerHeight)
+    }
+
     var body: some View {
-        ZStack(alignment: .top) {
-            contentBuilder(
-                hasPullToRefresh ? { triggerPullToRefresh() } : nil,
-                hasPullToLoadMore ? { triggerPullToLoadMore() } : nil,
-                hasPullToRefresh || hasPullToLoadMore ? { refresh, loadMore in
-                    DispatchQueue.main.async {
-                        if !pullToRefreshInProgress { refreshDragProgress = refresh }
-                        if !pullToLoadMoreInProgress { loadMoreDragProgress = loadMore }
-                    }
-                } : nil
-            )
-            .ignoresSafeArea()
+        GeometryReader { _ in
+            ZStack(alignment: .top) {
+                contentBuilder(
+                    hasPullToRefresh ? { triggerPullToRefresh() } : nil,
+                    hasPullToLoadMore ? { triggerPullToLoadMore() } : nil,
+                    hasPullToRefresh || hasPullToLoadMore ? { refresh, loadMore in
+                        DispatchQueue.main.async {
+                            if !pullToRefreshInProgress { refreshDragProgress = refresh }
+                            if !pullToLoadMoreInProgress { loadMoreDragProgress = loadMore }
+                        }
+                    } : nil
+                )
+                .ignoresSafeArea()
 
-            if hasPullToRefresh {
-                PetalSpinner(progress: refreshDragProgress, isSpinning: showRefreshSpinner)
-                    .frame(maxWidth: .infinity)
-                    .offset(y: headerHeight + 8)
-                    .opacity(refreshSpinnerOpacity)
-            }
-
-            if hasPullToLoadMore {
-                VStack {
-                    Spacer()
-                    PetalSpinner(progress: loadMoreDragProgress, isSpinning: showLoadMoreSpinner)
+                if hasPullToRefresh {
+                    PetalSpinner(progress: refreshDragProgress, isSpinning: showRefreshSpinner)
                         .frame(maxWidth: .infinity)
-                        .padding(.bottom, 16)
+                        .offset(y: headerHeight + 8)
+                        .opacity(refreshSpinnerOpacity)
                 }
-            }
 
-            if params.showsIndicators {
-                customScrollIndicator
-            }
-
-            Color.clear
-                .frame(height: headerHeight)
-                .frame(maxWidth: .infinity)
-                .overlay(alignment: params.headerAlignment) {
-                    header(headerHeight, collapseProgressValue)
+                if hasPullToLoadMore {
+                    VStack {
+                        Spacer()
+                        PetalSpinner(progress: loadMoreDragProgress, isSpinning: showLoadMoreSpinner)
+                            .frame(maxWidth: .infinity)
+                            .padding(.bottom, 16)
+                    }
                 }
-                .clipped(isClipped: params.headerIsClipped)
-                .animation(params.headerAnimation, value: params.shouldSnapTo.wrappedValue)
+
+                if params.showsIndicators {
+                    customScrollIndicator
+                }
+
+                Color.clear
+                    .frame(height: headerHeight)
+                    .frame(maxWidth: .infinity)
+                    .overlay(alignment: params.headerAlignment) {
+                        header(headerHeight, collapseProgressValue)
+                            .frame(minHeight: headerContentMinHeight, alignment: params.headerAlignment)
+                    }
+                    .clipped(isClipped: params.headerIsClipped)
+                    .animation(params.headerAnimation, value: params.shouldSnapTo.wrappedValue)
+            }
+            .background(SafeAreaReader { windowSafeAreaInsets = EdgeInsets($0) })
+            .environment(\.scalingHeaderSafeAreaInsets, windowSafeAreaInsets)
         }
         .ignoresSafeArea()
         .onChange(of: headerHeight) { _ in
@@ -92,8 +104,7 @@ struct ScalingHeaderCore<Header: View, Content: View>: View {
             let sv = scrollViewProvider?()
             let contentH = sv?.contentSize.height ?? 0
             let screenH = geo.size.height
-            let bottomInset = sv?.safeAreaInsets.bottom ?? 0
-            let trackH = screenH - params.minHeight - bottomInset
+            let trackH = screenH - params.minHeight - geo.safeAreaInsets.bottom
             let visibleH = screenH - params.minHeight
             let scrollable = contentH - visibleH
             let isVisible = scrollOffset > -params.minHeight && scrollable > 0

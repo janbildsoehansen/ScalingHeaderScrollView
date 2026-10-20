@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct CircleButtonStyle: ButtonStyle {
 
@@ -27,6 +28,19 @@ struct CircleButtonStyle: ButtonStyle {
             .frame(width: width, height: height)
     }
 }
+
+// MARK: -
+
+extension UIApplication {
+
+    var keyWindowSafeAreaInsets: UIEdgeInsets {
+        connectedScenes
+            .compactMap { ($0 as? UIWindowScene)?.windows.first(where: \.isKeyWindow) }
+            .first?.safeAreaInsets ?? .zero
+    }
+}
+
+// MARK: -
 
 extension View {
 

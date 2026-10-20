@@ -11,47 +11,39 @@ import ScalingHeaderScrollView
 
 struct RequestScalingHeader: View {
 
-    @Environment(\.presentationMode) var presentationMode
-
     @State private var displayedColors: [Color] = []
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            ScalingHeaderScrollView(minHeight: 120.0, maxHeight: 250) { _, _ in
-                ZStack {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.15))
-                    Image("background")
-                        .resizable()
-                }
-            } content: {
-                VStack(alignment: .center) {
-                    InformationLabel(text: "↓ Pull to refresh ↓")
-                    InformationLabel(text: "↑ Pull to load more ↑")
-                    Divider()
-                    Text("Squares")
-                        .font(.largeTitle)
-                        .padding()
-                    scrollContent
-                        .padding()
-                }
-                .padding()
+        ScalingHeaderScrollView(minHeight: 120.0, maxHeight: 250) { _, _ in
+            ZStack {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.15))
+                Image("background")
+                    .resizable()
             }
-            .pullToRefresh {
-                await shuffleDataSource(delay: 3)
+        } content: {
+            VStack(alignment: .center) {
+                InformationLabel(text: "↓ Pull to refresh ↓")
+                InformationLabel(text: "↑ Pull to load more ↑")
+                Divider()
+                Text("Squares")
+                    .font(.largeTitle)
+                    .padding()
+                scrollContent
+                    .padding()
             }
-            .pullToLoadMore(contentOffset: 50) {
-                try? await Task.sleep(for: .seconds(3))
-                displayedColors += (0..<5).map { _ in samplePalette.randomElement()?.color ?? .gray }
-            }
-            .ignoresSafeArea()
-            .onAppear {
-                displayedColors = (0..<5).map { _ in samplePalette.randomElement()?.color ?? .gray }
-            }
-
-            Button("", action: { self.presentationMode.wrappedValue.dismiss() })
-                .buttonStyle(CircleButtonStyle(imageName: "arrow.backward"))
-                .padding(.leading, 16)
+            .padding()
+        }
+        .pullToRefresh {
+            await shuffleDataSource(delay: 3)
+        }
+        .pullToLoadMore(contentOffset: 50) {
+            try? await Task.sleep(for: .seconds(3))
+            displayedColors += (0..<5).map { _ in samplePalette.randomElement()?.color ?? .gray }
+        }
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .onAppear {
+            displayedColors = (0..<5).map { _ in samplePalette.randomElement()?.color ?? .gray }
         }
     }
 

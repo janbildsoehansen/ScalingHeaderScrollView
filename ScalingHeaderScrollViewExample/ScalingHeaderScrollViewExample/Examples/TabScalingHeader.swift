@@ -16,47 +16,31 @@ struct TabScalingHeader: View {
         var title: String { rawValue.capitalized }
     }
 
-    @Environment(\.presentationMode) var presentationMode
-
     @State private var selectedTab: Tab = .one
 
     private static let tabBarHeight: CGFloat = 50
+    private static let minHeight: CGFloat = tabBarHeight * 3
     private static let maxHeight: CGFloat = 300
 
-    private static var safeAreaTop: CGFloat {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?.windows.first { $0.isKeyWindow }?.safeAreaInsets.top ?? 44
-    }
-
-    private static var minHeight: CGFloat { (tabBarHeight + safeAreaTop) * 2 }
-
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            ScalingHeaderTabView(
-                selection: $selectedTab,
-                minHeight: Self.minHeight,
-                maxHeight: Self.maxHeight
-            ) { height, _ in
-                VStack(spacing: 0) {
-                    Image("image_1")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: max(0, height - Self.tabBarHeight))
-                        .clipped()
+        ScalingHeaderTabView(
+            selection: $selectedTab,
+            minHeight: Self.minHeight,
+            maxHeight: Self.maxHeight
+        ) { height, _ in
+            VStack(spacing: 0) {
+                Image("image_1")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: max(0, height - Self.tabBarHeight))
+                    .clipped()
 
-                    tabBar
-                }
-            } pageContent: { tab in
-                pageContent(for: tab)
+                tabBar
             }
-
-            Button("", action: { presentationMode.wrappedValue.dismiss() })
-                .buttonStyle(CircleButtonStyle(imageName: "arrow.backward"))
-                .padding(.leading, 16)
-                .padding(.top, Self.safeAreaTop + 8)
+        } pageContent: { tab in
+            pageContent(for: tab)
         }
-        .ignoresSafeArea()
+        .toolbarBackground(.hidden, for: .navigationBar)
     }
 
     // MARK: - Private

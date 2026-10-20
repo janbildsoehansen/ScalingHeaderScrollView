@@ -11,13 +11,15 @@ import ScalingHeaderScrollView
 
 struct BookingScreen: View {
 
+    private static let bookButtonHeight: CGFloat = 60
+    private static let footerVerticalPadding: CGFloat = 16
+
     @StateObject private var viewModel = BookingScreenViewModel()
-    @Environment(\.presentationMode) var presentationMode
 
     @State var snapTo: SnapHeaderState?
 
     var body: some View {
-        ZStack {
+        VStack(spacing: 0) {
             ScalingHeaderScrollView { _, _ in
                 BookingMapView(viewModel: viewModel)
             } content: {
@@ -25,55 +27,39 @@ struct BookingScreen: View {
             }
             .snapHeaderToState($snapTo)
 
-            topButtons
             footer
         }
-        .ignoresSafeArea()
-    }
-
-    private var topButtons: some View {
-        VStack {
-            HStack(spacing: 16) {
-                Button("") { self.presentationMode.wrappedValue.dismiss() }
-                    .buttonStyle(CircleButtonStyle(imageName: "arrow.backward"))
-                    .padding(.leading, 16)
-                Spacer()
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button("") {
                     print("Share")
                     snapTo = .collapsed
                 }
                 .buttonStyle(CircleButtonStyle(imageName: "arrowshape.turn.up.forward.fill"))
+            }
 
+            ToolbarItem(placement: .topBarTrailing) {
                 Button("") {
                     print("Like")
                     snapTo = .expanded
                 }
                 .buttonStyle(CircleButtonStyle(imageName: "heart.fill", foreground: .appRed))
-                .padding(.trailing, 16)
             }
-            Spacer()
         }
-        .padding(.top, 45)
-        .ignoresSafeArea()
     }
 
     private var footer: some View {
-        VStack {
+        HStack {
+            price
             Spacer()
-            ZStack {
-                Rectangle()
-                    .fill(.white)
-                    .frame(height: 180)
-                    .padding(.bottom, -100)
-                HStack {
-                    price
-                    Spacer()
-                    bookButton
-                }
-            }
+            bookButton
         }
-        .ignoresSafeArea()
-        .padding(.bottom, 40)
+        .padding(.vertical, Self.footerVerticalPadding)
+        .background(
+            Color.appBookingFooterBackground
+                .ignoresSafeArea()
+        )
     }
 
     private var price: some View {
@@ -90,14 +76,13 @@ struct BookingScreen: View {
         Button("Book now", action: { print("book") })
             .buttonStyle(BookButtonStyle())
             .padding(.trailing, 16)
-            .frame(width: 211, height: 60, alignment: .bottom)
+            .frame(width: 211, height: Self.bookButtonHeight, alignment: .bottom)
     }
 
     private var bookingContentView: some View {
         VStack {
             contentHeader
             details
-            Color.clear.frame(height: 100)
         }
         .padding(.top, 40)
         .padding(.horizontal, 24)
@@ -106,17 +91,13 @@ struct BookingScreen: View {
     private var contentHeader: some View {
         VStack(spacing: 0) {
             HStack {
-                placeName
+                Text(viewModel.placeName)
+                    .fontBold(color: .appDarkGray, size: 24)
                 Spacer()
                 stars
             }
             address
         }
-    }
-
-    private var placeName: some View {
-        Text(viewModel.placeName)
-            .fontBold(color: .appDarkGray, size: 24)
     }
 
     private var stars: some View {
@@ -188,7 +169,7 @@ struct BookingScreen: View {
                     Text(title)
                         .fontRegular(color: .appGray, size: 12)
                 }
-                .padding(.top, 21)
+                .padding(.top, 5)
             )
             .frame(width: 80, height: 80)
     }

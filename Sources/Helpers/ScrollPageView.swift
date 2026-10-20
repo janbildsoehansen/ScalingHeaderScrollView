@@ -133,6 +133,32 @@ final class PageViewController<Content: View>: UIViewController, UIScrollViewDel
         hostingController.view.layoutIfNeeded()
         scrollView.setContentOffset(CGPoint(x: 0, y: initialOffset), animated: false)
         onDidInitialize?(scrollView)
+
+        // The page-style TabView's own backing UICollectionView reads `safeAreaInsets`
+        // to auto-adjust its content inset; on devices where that read is briefly wrong
+        // (e.g. the iPhone Duo simulator), it bakes a stray horizontal inset into the
+        // initial contentOffset, showing a sliver of the next page until the user's
+        // first pan forces UIKit to recompute it. Disable the auto-adjustment and snap
+        // the offset back to the current page boundary ourselves.
+        if let pager = ancestorCollectionView {
+            pager.contentInsetAdjustmentBehavior = .never
+            let pageWidth = pager.bounds.width
+            if pageWidth > 0 {
+                let page = (pager.contentOffset.x / pageWidth).rounded()
+                pager.setContentOffset(CGPoint(x: page * pageWidth, y: pager.contentOffset.y), animated: false)
+            }
+        }
+    }
+
+    private var ancestorCollectionView: UICollectionView? {
+        var current = view.superview
+        while let candidate = current {
+            if let collectionView = candidate as? UICollectionView {
+                return collectionView
+            }
+            current = candidate.superview
+        }
+        return nil
     }
 
     // MARK: - UIScrollViewDelegate

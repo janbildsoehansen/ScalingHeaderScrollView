@@ -11,24 +11,16 @@ import ScalingHeaderScrollView
 
 struct ColorScalingHeader: View {
 
-    @Environment(\.presentationMode) var presentationMode
-
     @State private var selectedColor: Color = samplePalette[0].color
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            ScalingHeaderScrollView(minHeight: 110) { _, _ in
-                selectedColor
-            } content: {
-                scrollContent
-                    .padding()
-            }
-            .ignoresSafeArea()
-
-            Button("", action: { self.presentationMode.wrappedValue.dismiss() })
-                .buttonStyle(CircleButtonStyle(imageName: "arrow.backward"))
-                .padding(.leading, 16)
+        ScalingHeaderScrollView(minHeight: 110) { _, _ in
+            selectedColor
+        } content: {
+            scrollContent
+                .padding()
         }
+        .toolbarBackground(.hidden, for: .navigationBar)
     }
 
     // MARK: - Private

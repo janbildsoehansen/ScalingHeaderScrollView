@@ -58,15 +58,16 @@ public struct ScalingHeaderTabView<Tab: Hashable & CaseIterable, Header: View, C
                 return
             }
 
+            // Header height must stay exactly as it was on the previous tab; only when it's
+            // already fully collapsed do we also restore the new tab's own extra content scroll.
+            guard headerHeight <= params.minHeight else {
+                sv.setContentOffset(CGPoint(x: 0, y: -headerHeight), animated: false)
+                return
+            }
+
             let savedOffset = tabStates.states[newTab]?.offset ?? -params.maxHeight
             let contentScroll = max(0, savedOffset + params.minHeight)
-
-            if contentScroll > 0 {
-                headerHeight = params.minHeight
-                sv.setContentOffset(CGPoint(x: 0, y: -params.minHeight + contentScroll), animated: false)
-            } else {
-                sv.setContentOffset(CGPoint(x: 0, y: -headerHeight), animated: false)
-            }
+            sv.setContentOffset(CGPoint(x: 0, y: -params.minHeight + contentScroll), animated: false)
         }
         .onChange(of: params.scrollToTop.wrappedValue) { value in
             guard value else { return }

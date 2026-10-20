@@ -7,72 +7,63 @@
 //
 
 import SwiftUI
+import UIKit
 import ScalingHeaderScrollView
 
 struct BankingScreen: View {
 
-    @Environment(\.presentationMode) var presentationMode
+    static let cardPadding: CGFloat = 20
+    static let minCardHeight: CGFloat = 70
+    static let maxCardHeight: CGFloat = 230
+    static let titleTextHeight: CGFloat = 40
+    private static let baseMinHeaderHeight: CGFloat = titleTextHeight + 2 * cardPadding + minCardHeight
+    private static let baseMaxHeaderHeight: CGFloat = titleTextHeight + 2 * cardPadding + maxCardHeight
+    private static let topButtonSize: CGFloat = 50
+
     @State private var isActive = true
 
     let service = BankingService()
 
+    private var minHeaderHeight: CGFloat { Self.baseMinHeaderHeight + UIApplication.shared.keyWindowSafeAreaInsets.top }
+    private var maxHeaderHeight: CGFloat { Self.baseMaxHeaderHeight + UIApplication.shared.keyWindowSafeAreaInsets.top }
+
     var body: some View {
-        ZStack {
-            ScalingHeaderScrollView(minHeight: 220, maxHeight: 372) { _, progress in
-                ZStack {
-                    Color.hex("#EFF3F5").edgesIgnoringSafeArea(.all)
-                    CardView(progress: progress)
-                        .padding(.top, 130)
-                        .padding(.bottom, 40)
-                }
-            } content: {
-                VStack {
-                    ForEach(service.transactions) { transaction in
-                        TransactionView(transaction: transaction)
-                    }
-                }
-                .padding(.vertical, 15)
-            }
-            .allowsHeaderCollapse()
-            .pullToLoadMore(isActive: isActive, contentOffset: 50) {
-                isActive = false
-                try? await Task.sleep(for: .seconds(2))
-                Task.detached {
-                    try? await Task.sleep(for: .seconds(4))
-                    await MainActor.run {
-                        isActive = true
-                    }
-                }
-            }
-
-            topButtons
-
+        ScalingHeaderScrollView(minHeight: minHeaderHeight, maxHeight: maxHeaderHeight) { _ , progress in
+            CardView(progress: progress)
+        } content: {
             VStack {
-                Text("Visa Card")
-                    .fontRegular(size: 17)
-                    .padding(.top, 63)
-                Spacer()
+                ForEach(service.transactions) { transaction in
+                    TransactionView(transaction: transaction)
+                }
+            }
+            .padding(.vertical, 15)
+        }
+        .headerAlignment(.top)
+        .pullToLoadMore(isActive: isActive, contentOffset: 50) {
+            isActive = false
+            try? await Task.sleep(for: .seconds(2))
+            Task.detached {
+                try? await Task.sleep(for: .seconds(4))
+                await MainActor.run {
+                    isActive = true
+                }
             }
         }
-        .ignoresSafeArea()
-    }
-
-    private var topButtons: some View {
-        VStack {
-            HStack {
-                Button("", action: { self.presentationMode.wrappedValue.dismiss() })
-                    .buttonStyle(CircleButtonStyle(imageName: "arrow.backward", background: .white.opacity(0), width: 50, height: 50))
-                    .padding(.leading, 17)
-                    .padding(.top, 50)
-                Spacer()
+        .toolbarBackground(.hidden, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button("", action: { print("Info") })
-                    .buttonStyle(CircleButtonStyle(imageName: "ellipsis", background: .white.opacity(0), width: 50, height: 50))
-                    .padding(.trailing, 17)
-                    .padding(.top, 50)
+                    .buttonStyle(CircleButtonStyle(imageName: "ellipsis", background: .white.opacity(0), width: Self.topButtonSize, height: Self.topButtonSize))
             }
-            Spacer()
         }
-        .ignoresSafeArea()
+    }
+}
+
+private struct TitleBottomPreferenceKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
 

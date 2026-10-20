@@ -10,71 +10,47 @@ import SwiftUI
 import ScalingHeaderScrollView
 
 struct ContentView: View {
-    @Environment(\.presentationMode) var presentationMode
-
-    @State var simplePresented = false
-    @State var mapPresented = false
-    @State var colorPresented = false
-    @State var requestPresented = false
-    @State var tabPresented = false
-    @State var profilePresented = false
-    @State var bankingPresented = false
-    @State var bookingPresented = false
-    
     var body: some View {
-        List {
-            Section(header: Text("Simple Examples")) {
-                ExampleView(isPresented: $simplePresented, name: "Simple Scaling Header") {
-                    SimpleScalingHeader()
+        NavigationStack {
+            List {
+                Section(header: Text("Simple Examples")) {
+                    NavigationLink("Simple Scaling Header") {
+                        SimpleScalingHeader()
+                    }
+
+                    NavigationLink("Map Scaling Header") {
+                        MapScalingHeader()
+                    }
+
+                    NavigationLink("Color Scaling Header") {
+                        ColorScalingHeader()
+                    }
+
+                    NavigationLink("Request Scaling Header") {
+                        RequestScalingHeader()
+                    }
+
+                    NavigationLink("Tab Scaling Header") {
+                        TabScalingHeader()
+                    }
                 }
 
-                ExampleView(isPresented: $mapPresented, name: "Map Scaling Header") {
-                    MapScalingHeader()
-                }
+                Section(header: Text("Beautiful Examples")) {
+                    NavigationLink("Profile Screen") {
+                        ProfileScreen()
+                    }
 
-                ExampleView(isPresented: $colorPresented, name: "Color Scaling Header") {
-                    ColorScalingHeader()
-                }
+                    NavigationLink("Booking Screen") {
+                        BookingScreen()
+                    }
 
-                ExampleView(isPresented: $requestPresented, name: "Request Scaling Header") {
-                    RequestScalingHeader()
-                }
-
-                ExampleView(isPresented: $tabPresented, name: "Tab Scaling Header") {
-                    TabScalingHeader()
+                    NavigationLink("Banking Screen") {
+                        BankingScreen()
+                    }
                 }
             }
-
-            Section(header: Text("Beautiful Examples")) {
-                ExampleView(isPresented: $profilePresented, name: "Profile Screen") {
-                    ProfileScreen()
-                }
-
-                ExampleView(isPresented: $bookingPresented, name: "Booking Screen") {
-                    BookingScreen()
-                }
-
-                ExampleView(isPresented: $bankingPresented, name: "Banking Screen") {
-                    BankingScreen()
-                }
-            }
-        }
-        .listStyle(.grouped)
-    }
-}
-
-struct ExampleView<Content: View>: View {
-
-    @Binding var isPresented: Bool
-    var name: String
-    @ViewBuilder var content: () -> Content
-
-    var body: some View {
-        Button(name) {
-            isPresented = true
-        }
-        .fullScreenCover(isPresented: $isPresented) {
-            content()
+            .listStyle(.grouped)
+            .navigationBarTitleDisplayMode(.inline)
         }
     }
 }

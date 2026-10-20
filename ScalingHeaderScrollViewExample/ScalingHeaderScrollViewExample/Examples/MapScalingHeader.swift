@@ -12,8 +12,6 @@ import MapKit
 
 struct MapScalingHeader: View {
 
-    @Environment(\.presentationMode) var presentationMode
-
     private let maxHeight: CGFloat = UIScreen.main.bounds.height - 150
 
     @State private var mapRegion = MKCoordinateRegion(
@@ -22,21 +20,16 @@ struct MapScalingHeader: View {
     )
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
-            ScalingHeaderScrollView(minHeight: 150.0, maxHeight: maxHeight) { _, _ in
-                ClippedMap(region: $mapRegion, maxHeight: maxHeight)
-            } content: {
-                Text(defaultDescription)
-                    .padding()
-            }
-            .headerSnappingPositions(snapPositions: [0, 0.5, 1])
-            .initialSnapPosition(initialSnapPosition: 0.5)
-            .ignoresSafeArea()
-
-            Button("", action: { self.presentationMode.wrappedValue.dismiss() })
-                .buttonStyle(CircleButtonStyle(imageName: "arrow.backward"))
-                .padding(.leading, 16)
+        ScalingHeaderScrollView(minHeight: 150.0, maxHeight: maxHeight) { headerHeight, _ in
+            ClippedMap(region: $mapRegion, headerHeight: headerHeight, maxHeight: maxHeight)
+        } content: {
+            Text(defaultDescription)
+                .padding()
         }
+        .headerAlignment(.top)
+        .headerSnappingPositions(snapPositions: [0, 0.5, 1])
+        .initialSnapPosition(initialSnapPosition: 0.5)
+        .toolbarBackground(.hidden, for: .navigationBar)
     }
 
     // MARK: - Private
